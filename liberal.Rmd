@@ -1,0 +1,52 @@
+---
+title: "class notes"
+author: "Kiyeon Lee"
+date: "3/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(primer.data)
+library(rstanarm)
+library(tidyverse)
+```
+
+```{r}
+# Convert income into easier units
+# family is binomial because liberal is 0 or 1
+# Remember to use updated dataset and variable
+# 
+
+new_trains <- trains %>% 
+  select(age, att_end, party, income, treatment, liberal) %>% 
+  mutate(income_100k = income/100000) 
+
+fit_1 <- stan_glm(data = new_trains,
+         liberal ~ income_100k,
+         family = binomial,
+         refresh = 0)
+
+```
+
+What is the expected probability that someone with an income of $100,000 will be a liberal? 
+```{r}
+newobs <- tibble(income_100k = 1)
+
+pp <- posterior_epred(object = fit_1,
+                        newdata = newobs) %>% 
+  as_tibble()
+
+pp %>% 
+  ggplot(aes(x = `1`)) +
+  geom_histogram(aes(y = after_stat(count/sum(count))),
+                 bins = 100) +
+      labs(title = "Posterior for p(liberal | income = 100k)",
+           subtitle = "There is about 50% chance that a person with 100k is liberal",
+         x = "Probability",
+         y = "Probability")
+  
+  
+
+```
+
